@@ -251,9 +251,9 @@ export default function Ventas() {
       const ultimaVenta = ventasArray[0];
       const folio = ultimaVenta?.folio || ultimaVenta?.numero || ultimaVenta?.id || 'Registrada';
       
-      toast.success(`✅ Venta completada - Folio: ${folio}`, 5000);
+      toast.success(`Venta completada - Folio: ${folio}`, 5000);
     } catch (err) {
-      console.error('❌ Error al crear venta:', err);
+      console.error('Error al crear venta:', err);
       console.error('Error completo:', err.response?.data);
       
       const errorMsg = err.response?.data?.error || 
@@ -664,205 +664,205 @@ export default function Ventas() {
               </div>
 
               {/* Panel del carrito */}
-              <div className="w-full md:w-1/2 p-6 flex flex-col">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Resumen de Venta
-                </h3>
+              <div className="w-full md:w-1/2 flex flex-col overflow-hidden">
+                <div className="p-6 flex-1 overflow-y-auto">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Resumen de Venta
+                  </h3>
 
-                {/* Información del cliente */}
-                <div className="mb-4 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cliente *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Nombre del cliente"
-                      value={clienteNombre}
-                      onChange={(e) => setClienteNombre(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={submitting}
-                    />
+                  {/* Información del cliente */}
+                  <div className="mb-4 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cliente *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Nombre del cliente"
+                        value={clienteNombre}
+                        onChange={(e) => setClienteNombre(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={submitting}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        RFC (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: XAXX010101000"
+                        value={clienteRfc}
+                        onChange={(e) => setClienteRfc(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        maxLength={13}
+                        disabled={submitting}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      RFC (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: XAXX010101000"
-                      value={clienteRfc}
-                      onChange={(e) => setClienteRfc(e.target.value.toUpperCase())}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      maxLength={13}
-                      disabled={submitting}
-                    />
-                  </div>
-                </div>
 
-                {/* Carrito */}
-                <div className="border border-gray-200 rounded-lg mb-4 flex-1 min-h-0 flex flex-col bg-white">
-                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                  {/* Título del carrito */}
+                  <div className="mb-3">
                     <p className="text-sm font-medium text-gray-700">
                       Productos en el carrito ({carrito.length})
                     </p>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4">
-                    {carrito.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                        <ShoppingBag className="w-12 h-12 text-gray-300 mb-2" />
-                        <p className="text-sm text-gray-500">
-                          No hay productos agregados
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Selecciona productos de la lista
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {carrito.map((item) => (
-                          <div key={item.producto.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            {/* Nombre y precio unitario */}
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1 min-w-0 pr-2">
-                                <p className="font-medium text-sm text-gray-900 leading-tight">
-                                  {item.producto.nombre}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  ${item.precio_unitario.toFixed(2)} c/u
-                                </p>
-                              </div>
+
+                  {/* Lista de productos - sin contenedor limitado */}
+                  {carrito.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-12 border border-gray-200 rounded-lg bg-gray-50">
+                      <ShoppingBag className="w-12 h-12 text-gray-300 mb-2" />
+                      <p className="text-sm text-gray-500">
+                        No hay productos agregados
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Selecciona productos de la lista
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 mb-4">
+                      {carrito.map((item) => (
+                        <div key={item.producto.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          {/* Nombre y precio unitario */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <p className="font-medium text-sm text-gray-900 leading-tight">
+                                {item.producto.nombre}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                ${item.precio_unitario.toFixed(2)} c/u
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => eliminarDelCarrito(item.producto.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                              disabled={submitting}
+                              title="Eliminar"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          
+                          {/* Controles de cantidad y subtotal */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => eliminarDelCarrito(item.producto.id)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                                onClick={() => actualizarCantidad(item.producto.id, item.cantidad - 1)}
+                                className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 rounded transition-colors"
                                 disabled={submitting}
-                                title="Eliminar"
                               >
-                                <X className="w-4 h-4" />
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <input
+                                type="number"
+                                value={item.cantidad}
+                                onChange={(e) => actualizarCantidad(item.producto.id, parseInt(e.target.value) || 0)}
+                                className="w-16 text-center font-semibold border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+                                min="1"
+                                max={item.producto.stock}
+                                disabled={submitting}
+                              />
+                              <button
+                                onClick={() => actualizarCantidad(item.producto.id, item.cantidad + 1)}
+                                className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 rounded transition-colors"
+                                disabled={submitting}
+                              >
+                                <Plus className="w-4 h-4" />
                               </button>
                             </div>
-                            
-                            {/* Controles de cantidad y subtotal */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => actualizarCantidad(item.producto.id, item.cantidad - 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 rounded transition-colors"
-                                  disabled={submitting}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <input
-                                  type="number"
-                                  value={item.cantidad}
-                                  onChange={(e) => actualizarCantidad(item.producto.id, parseInt(e.target.value) || 0)}
-                                  className="w-16 text-center font-semibold border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
-                                  min="1"
-                                  max={item.producto.stock}
-                                  disabled={submitting}
-                                />
-                                <button
-                                  onClick={() => actualizarCantidad(item.producto.id, item.cantidad + 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 rounded transition-colors"
-                                  disabled={submitting}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-gray-500 mb-0.5">Subtotal</p>
-                                <p className="font-bold text-lg text-gray-900">
-                                  ${(item.cantidad * item.precio_unitario).toFixed(2)}
-                                </p>
-                              </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 mb-0.5">Subtotal</p>
+                              <p className="font-bold text-lg text-gray-900">
+                                ${(item.cantidad * item.precio_unitario).toFixed(2)}
+                              </p>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                {/* Totales */}
-                <div className="space-y-2 mb-4 bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">${calcularSubtotal().toFixed(2)}</span>
+                  {/* Totales */}
+                  <div className="space-y-2 mb-4 bg-gray-50 rounded-lg p-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-medium">${calcularSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">IVA (16%):</span>
+                      <span className="font-medium">${calcularIVA().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                      <span>Total:</span>
+                      <span className="text-green-600">${calcularTotal().toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">IVA (16%):</span>
-                    <span className="font-medium">${calcularIVA().toFixed(2)}</span>
+
+                  {/* Método de pago */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Método de Pago *
+                    </label>
+                    <select 
+                      value={metodoPago}
+                      onChange={(e) => setMetodoPago(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={submitting}
+                    >
+                      <option value="efectivo">Efectivo</option>
+                      <option value="tarjeta">Tarjeta</option>
+                      <option value="transferencia">Transferencia</option>
+                    </select>
                   </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
-                    <span>Total:</span>
-                    <span className="text-green-600">${calcularTotal().toFixed(2)}</span>
+
+                  {/* Observaciones */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Observaciones (opcional)
+                    </label>
+                    <textarea
+                      value={observaciones}
+                      onChange={(e) => setObservaciones(e.target.value)}
+                      placeholder="Notas adicionales..."
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      disabled={submitting}
+                    />
                   </div>
-                </div>
 
-                {/* Método de pago */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Método de Pago *
-                  </label>
-                  <select 
-                    value={metodoPago}
-                    onChange={(e) => setMetodoPago(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={submitting}
-                  >
-                    <option value="efectivo">Efectivo</option>
-                    <option value="tarjeta">Tarjeta</option>
-                    <option value="transferencia">Transferencia</option>
-                  </select>
-                </div>
-
-                {/* Observaciones */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Observaciones (opcional)
-                  </label>
-                  <textarea
-                    value={observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                    placeholder="Notas adicionales..."
-                    rows="2"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    disabled={submitting}
-                  />
-                </div>
-
-                {/* Botones */}
-                <div className="flex gap-3 pt-4 border-t border-gray-200">
-                  <Button 
-                    className="flex-1"
-                    onClick={handleCompletarVenta}
-                    disabled={carrito.length === 0 || submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Procesando...
-                      </>
-                    ) : (
-                      <>Completar Venta</>
-                    )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      if (carrito.length > 0) {
-                        if (confirm('¿Descartar venta actual?')) {
+                  {/* Botones */}
+                  <div className="flex gap-3 pt-4 border-t border-gray-200">
+                    <Button 
+                      className="flex-1"
+                      onClick={handleCompletarVenta}
+                      disabled={carrito.length === 0 || submitting}
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Procesando...
+                        </>
+                      ) : (
+                        <>Completar Venta</>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        if (carrito.length > 0) {
+                          if (confirm('¿Descartar venta actual?')) {
+                            setShowModal(false);
+                            limpiarFormulario();
+                          }
+                        } else {
                           setShowModal(false);
-                          limpiarFormulario();
                         }
-                      } else {
-                        setShowModal(false);
-                      }
-                    }}
-                    disabled={submitting}
-                  >
-                    Cancelar
-                  </Button>
+                      }}
+                      disabled={submitting}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
