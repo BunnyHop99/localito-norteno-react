@@ -10,6 +10,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line 
 } from 'recharts';
+import * as XLSX from 'xlsx';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
 
@@ -24,6 +25,7 @@ export default function Reportes() {
   const [error, setError] = useState(null);
   const [periodo, setPeriodo] = useState('30'); // días
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Cargar datos al montar y cuando cambia el periodo
   useEffect(() => {
@@ -133,14 +135,114 @@ export default function Reportes() {
   };
 
   const handleExportar = () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
-      {
-        loading: 'Generando reporte...',
-        success: '¡Reporte generado! (funcionalidad en desarrollo)',
-        error: 'Error al generar reporte'
+    try {
+      // Crear un nuevo libro de trabajo
+      const wb = XLSX.utils.book_new();
+
+      // 1. Hoja de Resumen Financiero
+      const resumenData = [
+        ['RESUMEN FINANCIERO'],
+        ['Período', `Últimos ${periodo} días`],
+        ['Fecha de generación', new Date().toLocaleDateString('es-MX')],
+        [],
+        ['Métrica', 'Valor'],
+        ['Ingresos Totales', ventasGeneral?.estadisticas?.monto_total || 0],
+        ['Total de Ventas', ventasGeneral?.estadisticas?.total_ventas || 0],
+        ['Utilidad Total', ventasGeneral?.estadisticas?.total_utilidad || 0],
+        ['Ticket Promedio', ventasGeneral?.estadisticas?.ticket_promedio || 0],
+        ['Margen de Utilidad %', ventasGeneral?.estadisticas?.monto_total > 0 
+          ? ((ventasGeneral?.estadisticas?.total_utilidad / ventasGeneral?.estadisticas?.monto_total) * 100).toFixed(2)
+          : 0]
+      ];
+      const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+      // 2. Hoja de Ventas Diarias
+      if (ventasPorDia.length > 0) {
+        const ventasDiariasData = ventasPorDia.map(v => ({
+          'Fecha': v.fecha,
+          'Monto de Ventas': v.ventas,
+          'Cantidad de Transacciones': v.cantidad
+        }));
+        const wsVentas = XLSX.utils.json_to_sheet(ventasDiariasData);
+        XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas Diarias');
       }
-    );
+
+      // 3. Hoja de Productos Más Vendidos
+      if (productosMasVendidos.length > 0) {
+        const productosData = productosMasVendidos.map((p, idx) => ({
+          'Posición': idx + 1,
+          'Producto': p.nombre,
+          'Código': p.codigo || 'N/A',
+          'Unidades Vendidas': p.cantidad_vendida,
+          'Total de Ventas': parseFloat(p.total_ventas || 0)
+        }));
+        const wsProductos = XLSX.utils.json_to_sheet(productosData);
+        XLSX.utils.book_append_sheet(wb, wsProductos, 'Top Productos');
+      }
+
+      // 4. Hoja de Categorías
+      if (categoriasRendimiento.length > 0) {
+        const categoriasData = categoriasRendimiento.map(c => ({
+          'Categoría': c.nombre,
+          'Unidades Vendidas': c.cantidad_vendida || 0,
+          'Ventas Totales': parseFloat(c.ventas_total || 0),
+          'Productos Activos': c.num_productos || 0
+        }));
+        const wsCategorias = XLSX.utils.json_to_sheet(categoriasData);
+        XLSX.utils.book_append_sheet(wb, wsCategorias, 'Categorías');
+      }
+
+      // 5. Hoja de Tendencia Mensual
+      if (ventasMensuales.length > 0) {
+        const mensualesData = ventasMensuales.map(v => ({
+          'Mes': v.mes,
+          'Ingresos': v.ingresos,
+          'Ticket Promedio': v.ticket_promedio,
+          'Número de Ventas': v.num_ventas
+        }));
+        const wsMensuales = XLSX.utils.json_to_sheet(mensualesData);
+        XLSX.utils.book_append_sheet(wb, wsMensuales, 'Tendencia Mensual');
+      }
+
+      // Generar nombre del archivo con fecha
+      const fecha = new Date().toISOString().split('T')[0];
+      const nombreArchivo = `Reporte_${periodo}dias_${fecha}.xlsx`;
+
+      // Descargar el archivo
+      XLSX.writeFile(wb, nombreArchivo);
+
+      toast.success(`✅ Reporte exportado: ${nombreArchivo}`);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      toast.error('❌ Error al generar el reporte');
+    }
+  };
+
+  const handleExportarCSV = () => {
+    try {
+      // Similar al Excel pero usando CSV
+      const productosData = productosMasVendidos.map((p, idx) => 
+        `${idx + 1},${p.nombre},${p.cantidad_vendida},${parseFloat(p.total_ventas || 0)}`
+      ).join('\n');
+
+      const csvContent = 'data:text/csv;charset=utf-8,' 
+        + 'Posición,Producto,Unidades,Total\n'
+        + productosData;
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Reporte_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('✅ Reporte CSV exportado');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      toast.error('❌ Error al generar CSV');
+    }
   };
 
   if (loading) {
@@ -240,9 +342,45 @@ export default function Reportes() {
             <option value="90">Últimos 3 meses</option>
             <option value="180">Últimos 6 meses</option>
           </select>
-          <Button icon={Download} onClick={handleExportar}>
-            Exportar
-          </Button>
+          <div className="relative">
+            <Button 
+              icon={Download} 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              Exportar
+            </Button>
+            
+            {showExportMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowExportMenu(false)}
+                ></div>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                  <button
+                    onClick={() => {
+                      handleExportar();
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar a Excel
+                  </button>
+                  {/* <button
+                    onClick={() => {
+                      handleExportarCSV();
+                      setShowExportMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar a CSV
+                  </button> */}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
