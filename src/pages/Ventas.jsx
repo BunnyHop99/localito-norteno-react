@@ -519,7 +519,7 @@ export default function Ventas() {
                           }`}>
                             {sale.estado_credito === 'pagado' && ''}
                             {sale.estado_credito === 'vencido' && ''}
-                            {sale.estado_credito === 'pendiente' && '⏱'}
+                            {sale.estado_credito === 'pendiente' && ''}
                             <span className="capitalize">{sale.estado_credito}</span>
                           </span>
                         ) : (
