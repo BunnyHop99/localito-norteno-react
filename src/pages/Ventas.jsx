@@ -29,6 +29,11 @@ export default function Ventas() {
   const [buscarProducto, setBuscarProducto] = useState('');
   const [observaciones, setObservaciones] = useState('');
 
+  // Credito
+  const [diasCredito, setDiasCredito] = useState('');
+  const [showConfirmPagoModal, setShowConfirmPagoModal] = useState(false);
+  const [ventaAPagar, setVentaAPagar] = useState(null);
+
   useEffect(() => {
     cargarDatos();
   }, []);
@@ -210,6 +215,12 @@ export default function Ventas() {
   const handleCompletarVenta = async () => {
     if (!validarVenta()) return;
 
+    // Validación de crédito
+    if (metodoPago === 'credito' && !diasCredito) {
+      toast.error('Selecciona el plazo de crédito');
+      return;
+    }
+
     try {
       setSubmitting(true);
       
@@ -224,6 +235,11 @@ export default function Ventas() {
           precio_unitario: item.precio_unitario
         }))
       };
+
+      // Agregar días de crédito si el método es crédito
+      if (metodoPago === 'credito') {
+        ventaData.dias_credito = parseInt(diasCredito);
+      }
 
       console.log('📤 Enviando venta:', ventaData);
       
@@ -286,8 +302,32 @@ export default function Ventas() {
     setClienteNombre('Público General');
     setClienteRfc('');
     setMetodoPago('efectivo');
+    setDiasCredito('');
     setObservaciones('');
     setBuscarProducto('');
+  };
+
+  const handleMarcarPagado = async (ventaId) => {
+  setVentaAPagar(ventaId);
+  setShowConfirmPagoModal(true);
+  };
+
+  const confirmarPago = async () => {
+    try {
+      await ventasService.marcarPagado(ventaAPagar);
+      await cargarDatos();
+      toast.success('Venta marcada como pagada');
+      setShowConfirmPagoModal(false);
+      setVentaAPagar(null);
+    } catch (err) {
+      console.error('Error al marcar como pagado:', err);
+      toast.error(err.response?.data?.error || 'Error al marcar como pagado');
+    }
+  };
+
+  const cancelarPago = () => {
+    setShowConfirmPagoModal(false);
+    setVentaAPagar(null);
   };
 
   if (loading) {
@@ -390,7 +430,9 @@ export default function Ventas() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Crédito</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Vencimiento</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -465,8 +507,70 @@ export default function Ventas() {
                           {sale.cancelada ? 'Cancelada' : 'Completada'}
                         </span>
                       </td>
+
                       <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                        {sale.metodo_pago === 'credito' ? (
+                          <span className={`px-2 py-1 text-xs font-medium rounded flex items-center gap-1 w-fit ${
+                            sale.estado_credito === 'pagado' 
+                              ? 'bg-green-100 text-green-800' 
+                              : sale.estado_credito === 'vencido'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {sale.estado_credito === 'pagado' && ''}
+                            {sale.estado_credito === 'vencido' && ''}
+                            {sale.estado_credito === 'pendiente' && '⏱'}
+                            <span className="capitalize">{sale.estado_credito}</span>
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-500">
+                            N/A
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-4 flex justify-center py-3">
+                        {sale.metodo_pago === 'credito' && sale.fecha_vencimiento ? (
+                          <div>
+                            <div className="text-sm text-gray-900">
+                              {new Date(sale.fecha_vencimiento).toLocaleDateString('es-MX', { 
+                                day: '2-digit', 
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            {sale.estado_credito === 'pendiente' && sale.dias_para_vencimiento !== null && (
+                              <div className={`text-xs ${sale.dias_para_vencimiento <= 2 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                                {sale.dias_para_vencimiento === 0 ? 'Vence hoy' :
+                                sale.dias_para_vencimiento === 1 ? 'Vence mañana' :
+                                sale.dias_para_vencimiento > 0 ? `${sale.dias_para_vencimiento} días` :
+                                `Vencido hace ${Math.abs(sale.dias_para_vencimiento)} días`}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-500">
+                            N/A
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex justify-center gap-2">
+                          {/* Botón Marcar como Pagado - solo para créditos pendientes */}
+                          {sale.metodo_pago === 'credito' && 
+                          sale.estado_credito === 'pendiente' && 
+                          !sale.cancelada && (
+                            <button
+                              onClick={() => handleMarcarPagado(sale.id)}
+                              className="px-3 py-1 text-xs font-medium text-green-600 hover:bg-green-50 rounded transition-colors"
+                              title="Marcar como pagado"
+                            >
+                              Marcar Pagado
+                            </button>
+                          )}
+                          
+                          {/* Botón Cancelar */}
                           {!sale.cancelada && (
                             <button
                               onClick={() => handleCancelarVenta(sale.id)}
@@ -477,6 +581,7 @@ export default function Ventas() {
                           )}
                         </div>
                       </td>
+
                     </tr>
                     
                     {/* Fila expandida con detalles */}
@@ -805,15 +910,40 @@ export default function Ventas() {
                     </label>
                     <select 
                       value={metodoPago}
-                      onChange={(e) => setMetodoPago(e.target.value)}
+                      onChange={(e) => {
+                        setMetodoPago(e.target.value);
+                        // Resetear días de crédito si no es crédito
+                        if (e.target.value !== 'credito') {
+                          setDiasCredito('');
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       disabled={submitting}
                     >
                       <option value="efectivo">Efectivo</option>
                       <option value="tarjeta">Tarjeta</option>
                       <option value="transferencia">Transferencia</option>
+                      <option value="credito">Crédito</option>
                     </select>
                   </div>
+
+                  {metodoPago === 'credito' && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Plazo de Crédito *
+                      </label>
+                      <select 
+                        value={diasCredito}
+                        onChange={(e) => setDiasCredito(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={submitting}
+                      >
+                        <option value="">Seleccionar plazo...</option>
+                        <option value="15">15 días</option>
+                        <option value="30">30 días</option>
+                      </select>
+                    </div>
+                  )}
 
                   {/* Observaciones */}
                   <div className="mb-4">
@@ -865,6 +995,51 @@ export default function Ventas() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Pago */}
+      {showConfirmPagoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Confirmar Pago
+                </h2>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4">
+              <p className="text-gray-700">
+                ¿Estás seguro de marcar esta venta a crédito como <span className="font-semibold text-green-600">pagada</span>?
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Esta acción actualizará el estado del crédito y registrará la fecha de pago.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 rounded-b-lg flex gap-3 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={cancelarPago}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={confirmarPago}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Confirmar Pago
+              </Button>
             </div>
           </div>
         </div>

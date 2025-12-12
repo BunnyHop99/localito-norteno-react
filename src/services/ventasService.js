@@ -21,6 +21,11 @@ export const ventasService = {
     return response.data;
   },
 
+  marcarPagado: async (id) => {
+    const response = await api.post(`/ventas/${id}/marcar_pagado/`);
+    return response.data;
+  },
+
   getEstadisticasHoy: async () => {
     const response = await api.get('/ventas/estadisticas_hoy/');
     return response.data;
