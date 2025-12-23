@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await api.post('/auth/jwt/create/', {
+      const response = await api.post('/api/auth/jwt/create/', {
         username,
         password,
       });
