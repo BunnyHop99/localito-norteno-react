@@ -7,7 +7,7 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await api.get('/auth/usuarios/me/');
+    const response = await api.get('/auth/users/me/');
     return response.data;
   },
 
