@@ -104,14 +104,6 @@ export default function Login() {
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
-
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              Credenciales de prueba: <br />
-              <span className="font-medium text-gray-700">admin / admin123</span>
-            </p>
-          </div>
         </div>
 
         <div className="text-center mt-6">
