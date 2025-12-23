@@ -2,7 +2,7 @@ import axios from 'axios';
 import { handleAPIError } from '../utils/errorHandler';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_BASE_URL = `${BACKEND_URL}/api`;
+const API_BASE_URL = BACKEND_URL;
 const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 30000;
 
 const api = axios.create({

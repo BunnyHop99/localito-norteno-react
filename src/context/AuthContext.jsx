@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       try {
-        const response = await api.get('/usuarios/me/');
+        const response = await api.get('/auth/users/me/');
         setUser(response.data);
         setIsAuthenticated(true);
       } catch (error) {
